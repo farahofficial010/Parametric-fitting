@@ -1,0 +1,66 @@
+% ========================================================================
+% Example 2: 3D Surface Fitting with Two Parameters
+% Same steps as the curve example, but with 2 parameters (u, v).
+% ========================================================================
+
+clear; clc; close all;
+
+% ------------------------------------------------------------------------
+% Step (1): Sets of Points
+% ------------------------------------------------------------------------
+% (* Data points in 3D: {x,y,z} *)
+data = [1, 3,  3;
+        3, 1,  8;
+        5, 3, 10;
+        4, 5, 15;
+        6, 5, 18];
+
+% (* Visualize the points *)
+A = scatter3(data(:,1), data(:,2), data(:,3), 110, 'r', 'filled', ...
+             'MarkerEdgeColor','k'); hold on;
+
+% ------------------------------------------------------------------------
+% Step (2): Sets of Parameters
+% ------------------------------------------------------------------------
+% (* Choose parameter values u, v for each data point *)
+uvals = [0; 1; 2; 3; 4];
+vvals = [0; 2; 4; 1; 3];
+
+% (* Build datasets *)
+dataX = [uvals, vvals, data(:,1)];
+dataY = [uvals, vvals, data(:,2)];
+dataZ = [uvals, vvals, data(:,3)];
+
+% ------------------------------------------------------------------------
+% Step (3): Fitting
+% ------------------------------------------------------------------------
+% (* Interpolating polynomials -- 2D basis {1, u, v, u^2, v^2} *)
+%    Fit each component (x, y, z) as a polynomial in BOTH u and v.
+n   = length(uvals);
+Phi = [ones(n,1), uvals, vvals, uvals.^2, vvals.^2];
+fx  = Phi \ dataX(:,3);
+fy  = Phi \ dataY(:,3);
+fz  = Phi \ dataZ(:,3);
+
+% ------------------------------------------------------------------------
+% Step (4): Parametric Function
+% ------------------------------------------------------------------------
+% (* Parametric function components -- displayed mathematically *)
+fprintf('Parametric surface components:\n');
+fprintf('  fx(u,v) = %.4g %+.4g*u %+.4g*v %+.4g*u^2 %+.4g*v^2\n', fx);
+fprintf('  fy(u,v) = %.4g %+.4g*u %+.4g*v %+.4g*u^2 %+.4g*v^2\n', fy);
+fprintf('  fz(u,v) = %.4g %+.4g*u %+.4g*v %+.4g*u^2 %+.4g*v^2\n', fz);
+
+% (* Parametric surface *)
+[U, V] = meshgrid(linspace(min(uvals), max(uvals), 120), ...
+                  linspace(min(vvals), max(vvals), 120));
+X = fx(1) + fx(2)*U + fx(3)*V + fx(4)*U.^2 + fx(5)*V.^2;
+Y = fy(1) + fy(2)*U + fy(3)*V + fy(4)*U.^2 + fy(5)*V.^2;
+Z = fz(1) + fz(2)*U + fz(3)*V + fz(4)*U.^2 + fz(5)*V.^2;
+
+B = surf(X, Y, Z, 'FaceAlpha', 0.85, 'EdgeColor', 'none');
+shading interp; colormap parula; camlight headlight; lighting gouraud;
+
+% (* Show points + surface together *)
+grid on; axis tight; view(-40, 25);
+xlabel('x'); ylabel('y'); zlabel('z');
