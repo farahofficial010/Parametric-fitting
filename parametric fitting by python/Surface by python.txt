@@ -1,0 +1,88 @@
+# =====================================================================
+# Example 2: 3D Surface Fitting with Two Parameters
+# Same four-step recipe as the curve example, with 2 parameters (u, v).
+# =====================================================================
+
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.colors import LightSource
+from mpl_toolkits.mplot3d import Axes3D  # noqa: F401 (registers 3D projection)
+
+# ---------------------------------------------------------------------
+# Step (1): Sets of Points
+# ---------------------------------------------------------------------
+data = np.array([
+    [1, 3, 3],
+    [3, 1, 8],
+    [5, 3, 10],
+    [4, 5, 15],
+    [6, 5, 18],
+], dtype=float)
+
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+ax.scatter(data[:, 0], data[:, 1], data[:, 2],
+           s=110, c='r', edgecolors='k', depthshade=False,
+           label='data points')
+
+# ---------------------------------------------------------------------
+# Step (2): Non-degenerate (u, v) parameter grid
+# ---------------------------------------------------------------------
+uvals = np.array([0, 1, 2, 3, 4], dtype=float)
+vvals = np.array([0, 2, 4, 1, 3], dtype=float)
+
+# ---------------------------------------------------------------------
+# Step (3): Fitting -- 2D basis {1, u, v, u^2, v^2}
+# ---------------------------------------------------------------------
+n = len(uvals)
+Phi = np.column_stack((np.ones(n), uvals, vvals, uvals**2, vvals**2))
+
+# MATLAB's `Phi \ data(:,k)` is a linear solve / least-squares solve.
+# With Phi being 5x5 and non-singular, np.linalg.solve gives the exact fit.
+fx = np.linalg.solve(Phi, data[:, 0])
+fy = np.linalg.solve(Phi, data[:, 1])
+fz = np.linalg.solve(Phi, data[:, 2])
+
+# ---------------------------------------------------------------------
+# Step (4): Parametric Function
+# ---------------------------------------------------------------------
+print('Parametric surface components:')
+print(' fx(u,v) = {:+.4g} {:+.4g}*u {:+.4g}*v {:+.4g}*u^2 {:+.4g}*v^2'.format(*fx))
+print(' fy(u,v) = {:+.4g} {:+.4g}*u {:+.4g}*v {:+.4g}*u^2 {:+.4g}*v^2'.format(*fy))
+print(' fz(u,v) = {:+.4g} {:+.4g}*u {:+.4g}*v {:+.4g}*u^2 {:+.4g}*v^2'.format(*fz))
+
+U, V = np.meshgrid(
+    np.linspace(uvals.min(), uvals.max(), 120),
+    np.linspace(vvals.min(), vvals.max(), 120),
+)
+X = fx[0] + fx[1]*U + fx[2]*V + fx[3]*U**2 + fx[4]*V**2
+Y = fy[0] + fy[1]*U + fy[2]*V + fy[3]*U**2 + fy[4]*V**2
+Z = fz[0] + fz[1]*U + fz[2]*V + fz[3]*U**2 + fz[4]*V**2
+
+# 'parula' has no direct matplotlib equivalent; 'viridis' is the standard
+# perceptually-uniform analog. Gouraud-style smooth shading via LightSource.
+cmap = plt.get_cmap('viridis')
+ls = LightSource(azdeg=315, altdeg=45)
+# Color the surface by Z, then apply shading for a camlight-like effect.
+znorm = (Z - Z.min()) / (Z.max() - Z.min() + 1e-12)
+rgb = ls.shade_rgb(cmap(znorm)[..., :3], Z, blend_mode='soft')
+
+surf = ax.plot_surface(
+    X, Y, Z,
+    facecolors=rgb,
+    rstride=1, cstride=1,
+    linewidth=0, antialiased=True, shade=False,
+    alpha=0.85,
+)
+
+ax.grid(True)
+ax.set_xlabel('x')
+ax.set_ylabel('y')
+ax.set_zlabel('z')
+# MATLAB view(az, el) with az=-40, el=25  ->  matplotlib view_init(elev, azim)
+ax.view_init(elev=25, azim=-40)
+ax.set_box_aspect(None, zoom=0.95)  # mimic `axis tight` cosmetics
+ax.legend()
+
+plt.tight_layout()
+plt.show()

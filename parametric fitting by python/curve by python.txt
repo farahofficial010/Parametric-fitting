@@ -1,0 +1,65 @@
+# =====================================================================
+# Example 1: 3D Curve Fitting with One Parameter
+# =====================================================================
+
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D  # noqa: F401 (registers 3D projection)
+
+# ---------------------------------------------------------------------
+# Step (1): Sets of Points
+# ---------------------------------------------------------------------
+# Data points in 3D: {x, y, z}
+data = np.array([
+    [1, 3, 3],
+    [3, 1, 8],
+    [5, 3, 10],
+    [4, 5, 15],
+    [6, 5, 18],
+], dtype=float)
+
+# Visualize the points
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+ax.scatter(data[:, 0], data[:, 1], data[:, 2],
+           s=80, c='r', depthshade=False, label='data points')
+
+# ---------------------------------------------------------------------
+# Step (2): Sets of Parameters (uniform)
+# ---------------------------------------------------------------------
+tvals = np.arange(data.shape[0]).astype(float)  # [0, 1, 2, 3, 4]
+
+dataX = np.column_stack((tvals, data[:, 0]))
+dataY = np.column_stack((tvals, data[:, 1]))
+dataZ = np.column_stack((tvals, data[:, 2]))
+
+# ---------------------------------------------------------------------
+# Step (3): Fitting -- exact polynomial interpolation, degree n-1 = 4
+# ---------------------------------------------------------------------
+n = len(tvals)
+# numpy.polyfit returns coefficients in the same order as MATLAB's polyfit
+# (highest power first), so np.polyval is directly compatible.
+fx = np.polyfit(dataX[:, 0], dataX[:, 1], n - 1)
+fy = np.polyfit(dataY[:, 0], dataY[:, 1], n - 1)
+fz = np.polyfit(dataZ[:, 0], dataZ[:, 1], n - 1)
+
+# ---------------------------------------------------------------------
+# Step (4): Parametric Function
+# ---------------------------------------------------------------------
+print('Parametric curve components:')
+print(' fx(t) = {:+.4g}*t^4 {:+.4g}*t^3 {:+.4g}*t^2 {:+.4g}*t {:+.4g}'.format(*fx))
+print(' fy(t) = {:+.4g}*t^4 {:+.4g}*t^3 {:+.4g}*t^2 {:+.4g}*t {:+.4g}'.format(*fy))
+print(' fz(t) = {:+.4g}*t^4 {:+.4g}*t^3 {:+.4g}*t^2 {:+.4g}*t {:+.4g}'.format(*fz))
+
+t = np.linspace(tvals.min(), tvals.max(), 400)
+ax.plot(np.polyval(fx, t), np.polyval(fy, t), np.polyval(fz, t),
+        'b-', linewidth=2, label='fitted curve')
+
+ax.grid(True)
+ax.set_xlabel('x')
+ax.set_ylabel('y')
+ax.set_zlabel('z')
+ax.legend()
+
+plt.tight_layout()
+plt.show()
