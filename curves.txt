@@ -1,0 +1,57 @@
+% ========================================================================
+% Example 1: 3D Curve Fitting with One Parameter
+% Direct MATLAB conversion of the Mathematica code.
+% ========================================================================
+
+clear; clc; close all;
+
+% ------------------------------------------------------------------------
+% Step (1): Sets of Points
+% ------------------------------------------------------------------------
+% (* Data points in 3D: {x,y,z} *)
+data = [1, 3,  3;
+        3, 1,  8;
+        5, 3, 10;
+        4, 5, 15;
+        6, 5, 18];
+
+% (* Visualize the points *)
+A = scatter3(data(:,1), data(:,2), data(:,3), 80, 'r', 'filled'); hold on;
+
+% ------------------------------------------------------------------------
+% Step (2): Sets of Parameters
+% ------------------------------------------------------------------------
+% (* Choose parameter values t for each data point *)
+tvals = (0:size(data,1)-1).';                 % [0;1;2;3;4]
+
+% (* Build datasets *)
+dataX = [tvals, data(:,1)];
+dataY = [tvals, data(:,2)];
+dataZ = [tvals, data(:,3)];
+
+% ------------------------------------------------------------------------
+% Step (3): Fitting
+% ------------------------------------------------------------------------
+% (* Interpolating polynomials -- degree n-1 = exact interpolation *)
+%    (MATLAB equivalent of Mathematica's InterpolatingPolynomial)
+n  = length(tvals);
+fx = polyfit(dataX(:,1), dataX(:,2), n-1);
+fy = polyfit(dataY(:,1), dataY(:,2), n-1);
+fz = polyfit(dataZ(:,1), dataZ(:,2), n-1);
+
+% ------------------------------------------------------------------------
+% Step (4): Parametric Function
+% ------------------------------------------------------------------------
+% (* Parametric function components -- displayed mathematically *)
+fprintf('Parametric curve components:\n');
+fprintf('  fx(t) = %.4g*t^4 %+.4g*t^3 %+.4g*t^2 %+.4g*t %+.4g\n', fx);
+fprintf('  fy(t) = %.4g*t^4 %+.4g*t^3 %+.4g*t^2 %+.4g*t %+.4g\n', fy);
+fprintf('  fz(t) = %.4g*t^4 %+.4g*t^3 %+.4g*t^2 %+.4g*t %+.4g\n', fz);
+
+% (* Parametric curve *)
+t = linspace(min(tvals), max(tvals), 400);
+B = plot3(polyval(fx,t), polyval(fy,t), polyval(fz,t), 'b-', 'LineWidth', 2);
+
+% (* Show points + curve together *)
+grid on; axis tight; view(3);
+xlabel('x'); ylabel('y'); zlabel('z');
